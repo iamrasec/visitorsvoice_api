@@ -1,0 +1,5 @@
+name = "Site Search Analytics from Visitors Voice"
+description = "Integrate Visitors Voice Site Search Analytics API with Drupal."
+core = "6.x"
+package = "Visitors Voice"
+

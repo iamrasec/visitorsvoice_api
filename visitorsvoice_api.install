@@ -1,0 +1,57 @@
+<?php
+
+/**
+ * Implementation of hook_schema().
+ */
+function visitorsvoice_api_schema() {
+  $schema['cache_visitorsvoice_api'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_visitorsvoice_api']['description'] = 'Cache table for the Visitors Voice API module to store full record response in JSON format.';
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install()
+ */
+function visitorsvoice_api_install() {
+  drupal_install_schema('visitorsvoice_api');
+}
+
+/**
+ * Implementation of hook_requirements().
+ *
+ * Requirement checks
+ *
+ * @param $phase (String)
+ * @return (Array)
+ *   The requirements of the module.
+ */
+function visitorsvoice_api_requirements($phase) {
+  $requirements = array();
+  if ($phase == 'runtime') {
+    $has_api_key = (variable_get('visitorsvoice_api_key', '') != '');
+
+    $requirements['visitorsvoice_api_key'] = array(
+      'title' => t('Visitors Voice API key'),
+      'value' => $has_api_key ? t('Registered') : t('Not registered'),
+    );
+    if (!$has_api_key) {
+      $requirements['visitorsvoice_api_key']['severity'] = REQUIREMENT_ERROR;
+      $requirements['visitorsvoice_api_key']['description'] = t('The Visitors Voice API module will not work properly because the API requires an API key. Please set the API key !here!', array('!here' => l(t('here'), 'admin/settings/visitorsvoice')));
+    }
+  }
+  return $requirements;
+}
+
+/**
+ * Implementation of hook_uninstall.
+ *
+ * Removes the unnecesary API key
+ */
+function visitorsvoice_api_uninstall() {
+  drupal_uninstall_schema('visitorsvoice_api');
+  variable_del('visitorsvoice_api_key');
+  variable_del('visitorsvoice_api_cache_data');
+  variable_del('visitorsvoice_api_cache_expire');
+  menu_rebuild();
+}

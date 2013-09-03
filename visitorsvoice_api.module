@@ -1,0 +1,590 @@
+<?php
+
+/**
+ * The JSON-based Visitors Voice API's URL
+ * @var string
+ */
+define('VISITORSVOICE_JSON_ENDPOINT', 'http://api.visitorsvoice.com/api/{date when api was published}');
+
+/**
+ * The Visitors Voice cache table name
+ * @var string
+ */
+define('VISITORSVOICE_CACHE', 'cache_visitorsvoice_api');
+
+/**
+ * The Visitors Voice API Key
+ * @var string
+ */
+define('API_KEY', variable_get('visitorsvoice_api_key', ''));
+
+/**
+ * Implementation of hook_menu().
+ */
+function visitorsvoice_api_menu() {
+  $items['admin/settings/visitorsvoice'] = array(
+    'title' => 'Visitors Voice API key setting',
+    'description' => t('Register your Visitors Voice API in order to integrate Visitors Voice on the site.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('visitorsvoice_api_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  
+  return $items;
+}
+
+/**
+ * Settings form for the API key
+ */
+function visitorsvoice_api_settings() {
+  
+  // Visitors Voice API Key Field
+  $form['visitorsvoice_api_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Visitors Voice API key'),
+    '#description' => t('Please input your Visitors Voice API key. If you don\'t have, you can sign up for your 60 days free trial !here.',
+        array('!here' => l(t('here'), 'http://en.visitorsvoice.com/sign-up-for-free-trial/'))),
+    '#default_value' => variable_get('visitorsvoice_api_key', ''),
+    '#size' => 20,
+  );
+  
+  // Cache Response Data checkbox
+  $form['visitorsvoice_api_cache_data'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Cache Response Data'),
+    '#description' => t('Store Visitors Voice API response in cache.'),
+    '#default_value' => variable_get('visitorsvoice_api_cache_data', ''),
+  );
+  
+  // Cache Expiration field
+  $form['visitorsvoice_api_cache_expire'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Cache Expiration'),
+    '#description' => t('Set cache expiration time in minutes.  This will only work if "Cache Response Data" is checked.'),
+    '#default_value' => variable_get('visitorsvoice_api_cache_expire', '0'),
+    '#size' => 5,
+  );
+
+  /* $form['visitorsvoice_api_url'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Visitors Voice API URL'),
+      '#description' => t('Please input URL of Visitors Voice API.'),
+      '#default_value' => variable_get('visitorsvoice_api_url', VISITORSVOICE_JSON),
+      '#size' => 60
+  ); */
+
+  return system_settings_form($form);
+}
+
+/**
+ * Check if your API key is valid
+ *
+ * @return (object)
+ *   The Drupal result object, or FALSE if the API key is not set.
+ */
+function visitorsvoice_api_checkapi(){
+  //$api_key = variable_get('visitorsvoice_api_key', '');
+  $api_key = API_KEY;
+  
+  if ($api_key == '') {
+    drupal_set_message(t('The Visitors Voice API key is not set correctly in this site. Please report the problem to site administrator.'));
+    return FALSE;
+  }
+
+  $params = array(
+    'api_key' => $api_key,
+  );
+  
+  $endpoint = 'APIKey';
+  
+  $data = visitorsvoice_api_retrieve_results($params, $endpoint);
+  
+  return $data;
+}
+
+/**
+ * Detect sudden changes (in real time or in the past) in what users are searching for.
+ * The function returns trending search terms ordered by increase in number of users
+ * that searched (increasedUser). 
+ *
+ * @date_zero (integer)
+ *   End date of the period where the search term trend should be detected (yyyymmdd).
+ *
+ * @duration (integer)
+ *   How many days back from date zero should be used for tracking the search term trend (1-10).
+ * 
+ * @offset (integer)
+ *   How many days previous to search term trend should be used for comparison (1-30).
+ * 
+ * @min_user (integer)
+ *   Minimum user count per day during trend period (>1).
+ * 
+ * @min_increase (integer)
+ *   Min increase in user count during trend period compared to previous period (>1).
+ *
+ * @ctr (string)
+ *   Min (GT) /max (LT) click through rate ("GT-61" search terms with max CTR of 60 during the trend period. "LT-59" means the opposite).
+ * 
+ * @return (object)
+ *   The Drupal result object, or FALSE if the API key is not set.
+ */
+function visitorsvoice_api_trending_search_terms($date_zero, $duration, $offset, $min_user, $min_increase, $ctr){
+  $params = array(
+    'api_key' => API_KEY,                         //required
+    'date_zero' => $date_zero,                    //required
+    'duration' => $duration,                      //required
+    'offset' => $offset,                          //required
+    'min_user' => $min_user,                      //required
+    'min_increase_percentage' => $min_increase,   //required
+    'click_through_rate' => $ctr,                 //required
+  );
+  
+  $endpoint = 'trendingsearchterms';
+  
+  $data = visitorsvoice_api_retrieve_results($params, $endpoint);
+  
+  return $data;
+}
+
+/**
+ * This function returns all search terms that were refined and then lead a user 
+ * to a URL sorted by count. 
+ *
+ * @start_date (integer)
+ *   From which date should data be retrieved (yyyymmdd).
+ * 
+ * @end_date (integer)
+ *   Until which date should data be retrieved (yyyymmdd).
+ *
+ * @url (string)
+ *   The url (e.g. "http://www.uddevalla.se/arbete.html").
+ *
+ * @return (object)
+ *   The Drupal result object, or FALSE if the API key is not set.
+ */
+function visitorsvoice_api_refinements_to_url($start_date, $end_date, $url){
+  $params = array(
+    'api_key' => API_KEY,         //required
+    'start_date' => $start_date,  //required
+    'end_date' => $end_date,      //required
+    'url' => $url,                //required
+  );
+  
+  $endpoint = 'refinementstourl';
+  
+  $data = visitorsvoice_api_retrieve_results($params, $endpoint);
+  
+  return $data;
+}
+
+/**
+ * Get all refinements for a search term ackumulated over time ordered by count 
+ *
+ * @searchterm (string)
+ *   The search term (e.g. "förskola").
+ *
+ * @return (object)
+ *   The Drupal result object, or FALSE if the API key is not set.
+ */
+function visitors_voice_api_refinements_to_search_term($searchterm){
+  $params = array(
+    'api_key' => API_KEY,         //required
+    'searchterm' => $searchterm,  //required
+  );
+  
+  $endpoint = 'RefinementsToSearchTerm';
+  
+  $data = visitorsvoice_api_retrieve_results($params, $endpoint);
+  
+  return $data;
+}
+
+/**
+ * Get an extensive set of data of all users behavior who searches for the search term (all lists are sorted on count descending). 
+ *
+ * @start_date (integer)
+ *   From which date should data be retrieved (yyyymmdd).
+ * 
+ * @end_date (integer)
+ *   Until which date should data be retrieved (yyyymmdd).
+ *
+ * @searchterm (string)
+ *   The search term (e.g. "förskola").
+ *
+ * @return (object)
+ *   The Drupal result object, or FALSE if the API key is not set.
+ */
+function visitors_voice_api_search_term_context($start_date, $end_date, $searchterm){
+  $params = array(
+    'api_key' => API_KEY,         //required
+    'start_date' => $start_date,  //required
+    'end_date' => $end_date,      //required  
+    'searchterm' => $searchterm,  //required
+  );
+  
+  $endpoint = 'searchtermcontext';
+  
+  $data = visitorsvoice_api_retrieve_results($params, $endpoint);
+  
+  return $data;
+}
+
+/**
+ * Understand which search terms and keywords relate to a URL; get all search terms and keywords that led to and from the URL. All search terms are ordered by count. 
+ *
+ * @start_date (integer)
+ *   From which date should data be retrieved (yyyymmdd).
+ * 
+ * @end_date (integer)
+ *   Until which date should data be retrieved (yyyymmdd).
+ *
+ * @url (string)
+ *   The url (e.g. "http://www.uddevalla.se/arbete.html").
+ *
+ * @return (object)
+ *   The Drupal result object, or FALSE if the API key is not set.
+ */
+function visitors_voice_api_url_context($start_date, $end_date, $url){
+  $params = array(
+    'api_key' => API_KEY,         //required
+    'start_date' => $start_date,  //required
+    'end_date' => $end_date,      //required
+    'url' => $url,                //required
+  );
+  
+  $endpoint = 'urlcontext';
+  
+  $data = visitorsvoice_api_retrieve_results($params, $endpoint);
+  
+  return $data;
+}
+
+/**
+ * Get all actions (clicks and searches) a users has done during his/her visit ordered by time sequence with oldest action first.
+ *
+ * @sessionid (string)
+ *   The user session id. Can handle more than one session id separated by ||.
+ *
+ * @return (object)
+ *   The Drupal result object, or FALSE if the API key is not set.
+ */
+function visitors_voice_api_user_session($sessionid){
+  $params = array(
+    'api_key' => API_KEY,       //required
+    'sessionid' => $sessionid,  //required
+  );
+  
+  $endpoint = 'usersession';
+  
+  $data = visitorsvoice_api_retrieve_results($params, $endpoint);
+  
+  return $data;
+}
+
+/**
+ * General performance metrics are number of searches, number of users, number of clicks, number of clickbacks, number of users that clicked in search engine result page. 
+ *
+ * @start_date (integer)
+ *   From which date should data be retrieved (yyyymmdd).
+ * 
+ * @end_date (integer)
+ *   Until which date should data be retrieved (yyyymmdd).
+ *
+ * @searchterm (string)
+ *   The search term (e.g. "förskola").
+ *
+ * @return (object)
+ *   The Drupal result object, or FALSE if the API key is not set.
+ */
+function visitors_voice_api_search_term_performance($start_date, $end_date, $searchterm){
+  $params = array(
+    'api_key' => API_KEY,         //required
+    'start_date' => $start_date,  //required
+    'end_date' => $end_date,      //required
+  );
+  
+  if($searchterm){
+    $params['searchterm'] = $searchterm;  //Not a required paramenter.
+  }
+  
+  $endpoint = 'searchtermperformance';
+  
+  $data = visitorsvoice_api_retrieve_results($params, $endpoint);
+  
+  return $data;
+}
+
+/**
+ * General list of search terms with performance metrics ordered by count.
+ *
+ * @start_date (integer)
+ *   From which date should data be retrieved (yyyymmdd).
+ * 
+ * @end_date (integer)
+ *   Until which date should data be retrieved (yyyymmdd).
+ *
+ * @min_count (integer, not a required field)
+ *   Only returns search terms where searches > min_searches.
+ *
+ * @min_user (string, not a required field)
+ *   Only returns search terms where users > min_count.
+ *
+ * @return (object)
+ *   The Drupal result object, or FALSE if the API key is not set.
+ */
+function visitors_voice_api_search_term_performance_list($start_date, $end_date, $min_count, $min_user){
+  $params = array(
+    'api_key' => API_KEY,         //required
+    'start_date' => $start_date,  //required
+    'end_date' => $end_date,      //required
+  );
+  
+  if($min_count){
+    $params['min_count'] = $min_count;  //Not a required paramenter.
+  }
+  
+  if($min_user){
+    $params['min_user'] = $min_user;  //Not a required paramenter.
+  }
+  
+  $endpoint = 'searchtermperformancelist';
+  
+  $data = visitorsvoice_api_retrieve_results($params, $endpoint);
+  
+  return $data;
+}
+
+/**
+ * Calculate the overall quality of the search results based on total nr of searches, total nr of users, total nr of clicks and total nr of users that clicked for all keywords used.
+ *
+ * @start_date (integer)
+ *   From which date should data be retrieved (yyyymmdd).
+ * 
+ * @end_date (integer)
+ *   Until which date should data be retrieved (yyyymmdd).
+ *
+ * @return (object)
+ *   The Drupal result object, or FALSE if the API key is not set.
+ */
+function visitors_voice_api_overall_performance($start_date, $end_date){
+  $params = array(
+    'api_key' => API_KEY,         //required
+    'start_date' => $start_date,  //required
+    'end_date' => $end_date,      //required
+  );
+  
+  $endpoint = 'overallperformance';
+  
+  $data = visitorsvoice_api_retrieve_results($params, $endpoint);
+  
+  return $data;
+}
+
+/**
+ * Get search terms searched to an URL sorted by count descending.
+ *
+ * @start_date (integer)
+ *   From which date should data be retrieved (yyyymmdd).
+ * 
+ * @end_date (integer)
+ *   Until which date should data be retrieved (yyyymmdd).
+ *
+ * @url (string)
+ *   The url - could also be part of url and get all urls matching (e.g. "http://www.uddevalla.se/arbete/ledigajobb.4.58be7a9d10d9c62bc5f800019612.html").
+ *
+ * @max_searchterms (integer)
+ *   Max. number of search terms to be returned (default is 20).
+ *
+ * @min_count (integer)
+ *   Min. number of searches for each search term to be returned (e.g. 5).
+ *
+ * @min_user (integer)
+ *   Min. number of users searching for each search term to be returned (e.g. 5).
+ *
+ * @return (object)
+ *   The Drupal result object, or FALSE if the API key is not set.
+ */
+function visitors_voice_api_search_terms_to_url($start_date, $end_date, $url, $max_searchterms, $min_count, $min_user){
+  $params = array(
+    'api_key' => API_KEY,         //required
+    'start_date' => $start_date,  //required
+    'end_date' => $end_date,      //required
+    'url' => $url,                //required
+  );
+  
+  //Not a required paramenter.  Default is 20.
+  $params['max_searchterms'] = (($max_searchterms) ? $max_searchterms : 20);
+  
+  if($min_count){
+    $params['min_count'] = $min_count;  //Not a required paramenter.
+  }
+  
+  if($min_user){
+    $params['min_user'] = $min_user;  //Not a required paramenter.
+  }
+  
+  $endpoint = 'SearchTermsToUrl';
+  
+  $data = visitorsvoice_api_retrieve_results($params, $endpoint);
+  
+  return $data;
+}
+
+/**
+ * Get search terms searched to an URL sorted by count descending.
+ *
+ * @start_date (integer)
+ *   From which date should data be retrieved (yyyymmdd).
+ * 
+ * @end_date (integer)
+ *   Until which date should data be retrieved (yyyymmdd).
+ *
+ * @url (string)
+ *   The url - could also be part of url and get all urls matching (e.g. "http://www.uddevalla.se/arbete/ledigajobb.4.58be7a9d10d9c62bc5f800019612.html").
+ *
+ * @max_searchterms (integer)
+ *   Max. number of search terms to be returned (default is 20).
+ *
+ * @min_count (integer)
+ *   Min. number of searches for each search term to be returned (e.g. 5).
+ *
+ * @min_user (integer)
+ *   Min. number of users searching for each search term to be returned (e.g. 5).
+ *
+ * @max_ctr (string)
+ *   Max. click through rate for each search term to be returned (e.g. 25 %).
+ *
+ * @min_ctr (string)
+ *   Min. click through rate for each search term to be returned (e.g. 25 %).
+ *
+ * @return (object)
+ *   The Drupal result object, or FALSE if the API key is not set.
+ */
+function visitors_voice_api_search_terms_from_url($start_date, $end_date, $url, $max_searchterms, $min_count, $min_user, $max_ctr, $min_ctr){
+  $params = array(
+    'api_key' => API_KEY,         //required
+    'start_date' => $start_date,  //required
+    'end_date' => $end_date,      //required
+    'url' => $url,                //required
+  );
+  
+  //Not a required paramenter.  Default is 20.
+  $params['max_searchterms'] = (($max_searchterms) ? $max_searchterms : 20);
+  
+  if($min_count){
+    $params['min_count'] = $min_count;  //Not a required paramenter.
+  }
+  
+  if($min_user){
+    $params['min_user'] = $min_user;  //Not a required paramenter.
+  }
+  
+  if($max_ctr){
+    $params['max_ctr'] = $max_ctr;  //Not a required paramenter.
+  }
+  
+  if($min_ctr){
+    $params['min_ctr'] = $min_ctr;  //Not a required paramenter.
+  }
+  
+  $endpoint = 'SearchTermsFromUrl';
+  
+  $data = visitorsvoice_api_retrieve_results($params, $endpoint);
+  
+  return $data;
+}
+
+/**
+ * Get search terms searched to an URL sorted by count descending.
+ *
+ * @start_date (integer)
+ *   From which date should data be retrieved (yyyymmdd).
+ * 
+ * @end_date (integer)
+ *   Until which date should data be retrieved (yyyymmdd).
+ *
+ * @url (string)
+ *   The url - could also be part of url and get all urls matching (e.g. "http://www.uddevalla.se/arbete/ledigajobb.4.58be7a9d10d9c62bc5f800019612.html").
+ *
+ * @max_keywords (integer)
+ *   Max. nr of keywords to be returned (default is 20).
+ *
+ * @min_user (integer)
+ *   Min. number of users searching for each search term to be returned (e.g. 5).
+ *
+ * @return (object)
+ *   The Drupal result object, or FALSE if the API key is not set.
+ */
+function visitors_voice_api_keywords_to_url($start_date, $end_date, $url, $max_keywords, $min_user){
+  $params = array(
+    'api_key' => API_KEY,         //required
+    'start_date' => $start_date,  //required
+    'end_date' => $end_date,      //required
+    'url' => $url,                //required
+  );
+  
+  //Not a required paramenter.  Default is 20.
+  $params['max_keywords'] = (($max_keywords) ? $max_keywords : 20);
+  
+  if($min_user){
+    $params['min_user'] = $min_user;  //Not a required paramenter.
+  }
+  
+  
+  $endpoint = 'KeywordsToUrl';
+  
+  $data = visitorsvoice_api_retrieve_results($params, $endpoint);
+  
+  return $data;
+}
+
+/**
+ * Retrieve results from Visitors Voice API
+ *
+ * @param (string)
+ *   The query term
+ *
+ * @return (object)
+ *   The Drupal result object, or FALSE if the API key is not set.
+ */
+function visitorsvoice_api_retrieve_results($params, $endpoint) {
+  
+  $url = 'http://api.visitorsvoice.com/Api/V1/' . $endpoint . '?' . http_build_query($params, '', '&');
+  
+  $is_cached = variable_get('visitorsvoice_api_cache_data', '0');
+  
+  if($is_cached == 1){
+    $cid = 'visitorsvoice:' . md5($url);
+  
+    $cached = cache_get($cid, VISITORSVOICE_CACHE);
+    
+    if ($cached){
+      $data = $cached->data;
+    }
+    else{
+      $cache_expire = variable_get('visitorsvoice_api_cache_expire', '0');
+      
+      $response = drupal_http_request($url);
+      //$response->url = $url;
+    
+      $data = json_decode($response->data);
+      
+      cache_set($cid, $data, VISITORSVOICE_CACHE, strtotime("+".$cache_expire." minutes"));
+    }
+  }
+  else{
+    $response = drupal_http_request($url);
+    
+    $data = json_decode($response->data);
+  }
+  
+  if($data->ErrorType){
+    drupal_set_message($data->ErrorType.': '.$data->Message, 'error', true);
+    
+    return false;
+  }
+  else{
+    return $data;
+  }
+}
