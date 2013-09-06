@@ -66,14 +66,6 @@ function visitorsvoice_api_settings() {
     '#size' => 5,
   );
 
-  /* $form['visitorsvoice_api_url'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Visitors Voice API URL'),
-      '#description' => t('Please input URL of Visitors Voice API.'),
-      '#default_value' => variable_get('visitorsvoice_api_url', VISITORSVOICE_JSON),
-      '#size' => 60
-  ); */
-
   return system_settings_form($form);
 }
 
@@ -566,7 +558,6 @@ function visitorsvoice_api_retrieve_results($params, $endpoint) {
       $cache_expire = variable_get('visitorsvoice_api_cache_expire', '0');
       
       $response = drupal_http_request($url);
-      //$response->url = $url;
     
       $data = json_decode($response->data);
       
