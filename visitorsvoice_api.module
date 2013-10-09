@@ -72,7 +72,7 @@ function visitorsvoice_api_settings() {
 /**
  * Check if your API key is valid
  *
- * @return (object)
+ * @return
  *   The Drupal result object, or FALSE if the API key is not set.
  */
 function visitorsvoice_api_checkapi(){
@@ -100,26 +100,21 @@ function visitorsvoice_api_checkapi(){
  * The function returns trending search terms ordered by increase in number of users
  * that searched (increasedUser). 
  *
- * @date_zero (integer)
- *   End date of the period where the search term trend should be detected (yyyymmdd).
- *
- * @duration (integer)
- *   How many days back from date zero should be used for tracking the search term trend (1-10).
+ * @param $date_zero
+ *   End date of the period where the search term trend should be detected (yyyymmdd) (integer).
+ * @param $duration
+ *   How many days back from date zero should be used for tracking the search term trend (1-10) (integer).
+ * @param $offset
+ *   How many days previous to search term trend should be used for comparison (1-30) (integer).
+ * @param $min_user
+ *   Minimum user count per day during trend period (>1) (integer).
+ * @param $min_increase
+ *   Min increase in user count during trend period compared to previous period (>1) (integer).
+ * @param $ctr
+ *   Min (GT) /max (LT) click through rate ("GT-61" search terms with max CTR of 60 during the trend period. "LT-59" means the opposite) (string).
  * 
- * @offset (integer)
- *   How many days previous to search term trend should be used for comparison (1-30).
- * 
- * @min_user (integer)
- *   Minimum user count per day during trend period (>1).
- * 
- * @min_increase (integer)
- *   Min increase in user count during trend period compared to previous period (>1).
- *
- * @ctr (string)
- *   Min (GT) /max (LT) click through rate ("GT-61" search terms with max CTR of 60 during the trend period. "LT-59" means the opposite).
- * 
- * @return (object)
- *   The Drupal result object, or FALSE if the API key is not set.
+ * @param return
+ *   The Drupal result object, or FALSE if the API key is not set (object).
  */
 function visitorsvoice_api_trending_search_terms($date_zero, $duration, $offset, $min_user, $min_increase, $ctr){
   $params = array(
@@ -143,17 +138,15 @@ function visitorsvoice_api_trending_search_terms($date_zero, $duration, $offset,
  * This function returns all search terms that were refined and then lead a user 
  * to a URL sorted by count. 
  *
- * @start_date (integer)
- *   From which date should data be retrieved (yyyymmdd).
- * 
- * @end_date (integer)
- *   Until which date should data be retrieved (yyyymmdd).
+ * @param $start_date
+ *   From which date should data be retrieved (yyyymmdd) (integer).
+ * @param $end_date
+ *   Until which date should data be retrieved (yyyymmdd) (integer).
+ * @param $url
+ *   The url (e.g. "http://www.uddevalla.se/arbete.html") (string).
  *
- * @url (string)
- *   The url (e.g. "http://www.uddevalla.se/arbete.html").
- *
- * @return (object)
- *   The Drupal result object, or FALSE if the API key is not set.
+ * @param $return
+ *   The Drupal result object, or FALSE if the API key is not set (object).
  */
 function visitorsvoice_api_refinements_to_url($start_date, $end_date, $url){
   $params = array(
@@ -173,10 +166,10 @@ function visitorsvoice_api_refinements_to_url($start_date, $end_date, $url){
 /**
  * Get all refinements for a search term ackumulated over time ordered by count 
  *
- * @searchterm (string)
- *   The search term (e.g. "förskola").
+ * @param $searchterm
+ *   The search term (e.g. "förskola") (string).
  *
- * @return (object)
+ * @return
  *   The Drupal result object, or FALSE if the API key is not set.
  */
 function visitors_voice_api_refinements_to_search_term($searchterm){
@@ -195,16 +188,14 @@ function visitors_voice_api_refinements_to_search_term($searchterm){
 /**
  * Get an extensive set of data of all users behavior who searches for the search term (all lists are sorted on count descending). 
  *
- * @start_date (integer)
- *   From which date should data be retrieved (yyyymmdd).
- * 
- * @end_date (integer)
- *   Until which date should data be retrieved (yyyymmdd).
+ * @param $start_date
+ *   From which date should data be retrieved (yyyymmdd) (integer).
+ * @param $end_date
+ *   Until which date should data be retrieved (yyyymmdd) (integer).
+ * @param $searchterm
+ *   The search term (e.g. "förskola") (string).
  *
- * @searchterm (string)
- *   The search term (e.g. "förskola").
- *
- * @return (object)
+ * @return
  *   The Drupal result object, or FALSE if the API key is not set.
  */
 function visitors_voice_api_search_term_context($start_date, $end_date, $searchterm){
@@ -225,16 +216,14 @@ function visitors_voice_api_search_term_context($start_date, $end_date, $searcht
 /**
  * Understand which search terms and keywords relate to a URL; get all search terms and keywords that led to and from the URL. All search terms are ordered by count. 
  *
- * @start_date (integer)
- *   From which date should data be retrieved (yyyymmdd).
- * 
- * @end_date (integer)
- *   Until which date should data be retrieved (yyyymmdd).
+ * @param $start_date
+ *   From which date should data be retrieved (yyyymmdd) (integer).
+ * @param $end_date
+ *   Until which date should data be retrieved (yyyymmdd) (integer).
+ * @param $url
+ *   The url (e.g. "http://www.uddevalla.se/arbete.html") (string).
  *
- * @url (string)
- *   The url (e.g. "http://www.uddevalla.se/arbete.html").
- *
- * @return (object)
+ * @return
  *   The Drupal result object, or FALSE if the API key is not set.
  */
 function visitors_voice_api_url_context($start_date, $end_date, $url){
@@ -255,10 +244,10 @@ function visitors_voice_api_url_context($start_date, $end_date, $url){
 /**
  * Get all actions (clicks and searches) a users has done during his/her visit ordered by time sequence with oldest action first.
  *
- * @sessionid (string)
- *   The user session id. Can handle more than one session id separated by ||.
+ * @param $sessionid
+ *   The user session id. Can handle more than one session id separated by || (string).
  *
- * @return (object)
+ * @return
  *   The Drupal result object, or FALSE if the API key is not set.
  */
 function visitors_voice_api_user_session($sessionid){
@@ -277,16 +266,14 @@ function visitors_voice_api_user_session($sessionid){
 /**
  * General performance metrics are number of searches, number of users, number of clicks, number of clickbacks, number of users that clicked in search engine result page. 
  *
- * @start_date (integer)
- *   From which date should data be retrieved (yyyymmdd).
- * 
- * @end_date (integer)
- *   Until which date should data be retrieved (yyyymmdd).
+ * @param $start_date
+ *   From which date should data be retrieved (yyyymmdd) (integer).
+ * @param $end_date
+ *   Until which date should data be retrieved (yyyymmdd) (integer).
+ * @param $searchterm
+ *   The search term (e.g. "förskola") (string).
  *
- * @searchterm (string)
- *   The search term (e.g. "förskola").
- *
- * @return (object)
+ * @return
  *   The Drupal result object, or FALSE if the API key is not set.
  */
 function visitors_voice_api_search_term_performance($start_date, $end_date, $searchterm){
@@ -310,19 +297,16 @@ function visitors_voice_api_search_term_performance($start_date, $end_date, $sea
 /**
  * General list of search terms with performance metrics ordered by count.
  *
- * @start_date (integer)
- *   From which date should data be retrieved (yyyymmdd).
- * 
- * @end_date (integer)
- *   Until which date should data be retrieved (yyyymmdd).
+ * @param $start_date
+ *   From which date should data be retrieved (yyyymmdd) (integer).
+ * @param $end_date
+ *   Until which date should data be retrieved (yyyymmdd) (integer).
+ * @param $min_count
+ *   Only returns search terms where searches > min_searches (integer, not a required field).
+ * @param $min_user
+ *   Only returns search terms where users > min_count (string, not a required field).
  *
- * @min_count (integer, not a required field)
- *   Only returns search terms where searches > min_searches.
- *
- * @min_user (string, not a required field)
- *   Only returns search terms where users > min_count.
- *
- * @return (object)
+ * @return
  *   The Drupal result object, or FALSE if the API key is not set.
  */
 function visitors_voice_api_search_term_performance_list($start_date, $end_date, $min_count, $min_user){
@@ -350,13 +334,12 @@ function visitors_voice_api_search_term_performance_list($start_date, $end_date,
 /**
  * Calculate the overall quality of the search results based on total nr of searches, total nr of users, total nr of clicks and total nr of users that clicked for all keywords used.
  *
- * @start_date (integer)
- *   From which date should data be retrieved (yyyymmdd).
- * 
- * @end_date (integer)
- *   Until which date should data be retrieved (yyyymmdd).
+ * @param $start_date
+ *   From which date should data be retrieved (yyyymmdd) (integer).
+ * @param $end_date
+ *   Until which date should data be retrieved (yyyymmdd) (integer).
  *
- * @return (object)
+ * @return
  *   The Drupal result object, or FALSE if the API key is not set.
  */
 function visitors_voice_api_overall_performance($start_date, $end_date){
@@ -376,25 +359,20 @@ function visitors_voice_api_overall_performance($start_date, $end_date){
 /**
  * Get search terms searched to an URL sorted by count descending.
  *
- * @start_date (integer)
- *   From which date should data be retrieved (yyyymmdd).
- * 
- * @end_date (integer)
- *   Until which date should data be retrieved (yyyymmdd).
+ * @param $start_date
+ *   From which date should data be retrieved (yyyymmdd) (integer).
+ * @param $end_date
+ *   Until which date should data be retrieved (yyyymmdd) (integer).
+ * @param $url
+ *   The url - could also be part of url and get all urls matching (e.g. "http://www.uddevalla.se/arbete/ledigajobb.4.58be7a9d10d9c62bc5f800019612.html") (string).
+ * @param $max_searchterms
+ *   Max. number of search terms to be returned (default is 20) (integer).
+ * @param $min_count
+ *   Min. number of searches for each search term to be returned (e.g. 5) (integer).
+ * @param $min_user
+ *   Min. number of users searching for each search term to be returned (e.g. 5) (integer).
  *
- * @url (string)
- *   The url - could also be part of url and get all urls matching (e.g. "http://www.uddevalla.se/arbete/ledigajobb.4.58be7a9d10d9c62bc5f800019612.html").
- *
- * @max_searchterms (integer)
- *   Max. number of search terms to be returned (default is 20).
- *
- * @min_count (integer)
- *   Min. number of searches for each search term to be returned (e.g. 5).
- *
- * @min_user (integer)
- *   Min. number of users searching for each search term to be returned (e.g. 5).
- *
- * @return (object)
+ * @return
  *   The Drupal result object, or FALSE if the API key is not set.
  */
 function visitors_voice_api_search_terms_to_url($start_date, $end_date, $url, $max_searchterms, $min_count, $min_user){
@@ -426,31 +404,24 @@ function visitors_voice_api_search_terms_to_url($start_date, $end_date, $url, $m
 /**
  * Get search terms searched to an URL sorted by count descending.
  *
- * @start_date (integer)
- *   From which date should data be retrieved (yyyymmdd).
- * 
- * @end_date (integer)
- *   Until which date should data be retrieved (yyyymmdd).
+ * @param $start_date
+ *   From which date should data be retrieved (yyyymmdd) (integer).
+ * @param $end_date
+ *   Until which date should data be retrieved (yyyymmdd) (integer).
+ * @param $url
+ *   The url - could also be part of url and get all urls matching (e.g. "http://www.uddevalla.se/arbete/ledigajobb.4.58be7a9d10d9c62bc5f800019612.html") (string).
+ * @param $max_searchterms
+ *   Max. number of search terms to be returned (default is 20) (integer).
+ * @param $min_count
+ *   Min. number of searches for each search term to be returned (e.g. 5) (integer).
+ * @param $min_user
+ *   Min. number of users searching for each search term to be returned (e.g. 5) (integer).
+ * @param $max_ctr
+ *   Max. click through rate for each search term to be returned (e.g. 25 %) (string).
+ * @param $min_ctr
+ *   Min. click through rate for each search term to be returned (e.g. 25 %) (string).
  *
- * @url (string)
- *   The url - could also be part of url and get all urls matching (e.g. "http://www.uddevalla.se/arbete/ledigajobb.4.58be7a9d10d9c62bc5f800019612.html").
- *
- * @max_searchterms (integer)
- *   Max. number of search terms to be returned (default is 20).
- *
- * @min_count (integer)
- *   Min. number of searches for each search term to be returned (e.g. 5).
- *
- * @min_user (integer)
- *   Min. number of users searching for each search term to be returned (e.g. 5).
- *
- * @max_ctr (string)
- *   Max. click through rate for each search term to be returned (e.g. 25 %).
- *
- * @min_ctr (string)
- *   Min. click through rate for each search term to be returned (e.g. 25 %).
- *
- * @return (object)
+ * @return
  *   The Drupal result object, or FALSE if the API key is not set.
  */
 function visitors_voice_api_search_terms_from_url($start_date, $end_date, $url, $max_searchterms, $min_count, $min_user, $max_ctr, $min_ctr){
@@ -490,22 +461,18 @@ function visitors_voice_api_search_terms_from_url($start_date, $end_date, $url, 
 /**
  * Get search terms searched to an URL sorted by count descending.
  *
- * @start_date (integer)
- *   From which date should data be retrieved (yyyymmdd).
- * 
- * @end_date (integer)
- *   Until which date should data be retrieved (yyyymmdd).
+ * @param $start_date
+ *   From which date should data be retrieved (yyyymmdd) (integer).
+ * @param $end_date
+ *   Until which date should data be retrieved (yyyymmdd) (integer).
+ * @param $url
+ *   The url - could also be part of url and get all urls matching (e.g. "http://www.uddevalla.se/arbete/ledigajobb.4.58be7a9d10d9c62bc5f800019612.html") (string).
+ * @param $max_keywords
+ *   Max. nr of keywords to be returned (default is 20) (integer).
+ * @param $min_user
+ *   Min. number of users searching for each search term to be returned (e.g. 5) (integer).
  *
- * @url (string)
- *   The url - could also be part of url and get all urls matching (e.g. "http://www.uddevalla.se/arbete/ledigajobb.4.58be7a9d10d9c62bc5f800019612.html").
- *
- * @max_keywords (integer)
- *   Max. nr of keywords to be returned (default is 20).
- *
- * @min_user (integer)
- *   Min. number of users searching for each search term to be returned (e.g. 5).
- *
- * @return (object)
+ * @return
  *   The Drupal result object, or FALSE if the API key is not set.
  */
 function visitors_voice_api_keywords_to_url($start_date, $end_date, $url, $max_keywords, $min_user){
@@ -534,10 +501,10 @@ function visitors_voice_api_keywords_to_url($start_date, $end_date, $url, $max_k
 /**
  * Retrieve results from Visitors Voice API
  *
- * @param (string)
+ * @param $params (string)
  *   The query term
  *
- * @return (object)
+ * @return
  *   The Drupal result object, or FALSE if the API key is not set.
  */
 function visitorsvoice_api_retrieve_results($params, $endpoint) {
